@@ -1,0 +1,15 @@
+@media print {
+    .print-hide {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+      overflow: hidden !important;
+    }
+  
+    footer {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+    }
+  }
+  
