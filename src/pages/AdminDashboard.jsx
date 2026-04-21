@@ -32,7 +32,7 @@ const AdminDashboard = () => {
       {/* CARDS */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-        {/* MEMO */}
+        {/* 🧾 MEMO */}
         <div
           onClick={() => navigate("/admin/memo")}
           className="bg-white p-6 rounded-xl shadow cursor-pointer hover:bg-green-50"
@@ -43,7 +43,7 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        {/* STOCK */}
+        {/* 📦 STOCK */}
         <div
           onClick={() => navigate("/admin/stock")}
           className="bg-white p-6 rounded-xl shadow cursor-pointer hover:bg-green-50"
@@ -54,9 +54,9 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        {/* EMPLOYEE ATTENDANCE */}
+        {/* 👨‍💼 ATTENDANCE */}
         <div
-          onClick={() => navigate("/admin/attendance")} // ✅ FIXED
+          onClick={() => navigate("/admin/attendance")}
           className="bg-white p-6 rounded-xl shadow cursor-pointer hover:bg-green-50"
         >
           <h2 className="text-lg font-semibold">👨‍💼 Attendance</h2>
@@ -65,7 +65,29 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        {/* TALLY KHATA */}
+        {/* 👨‍💼 EMPLOYEES (NEW) */}
+        <div
+          onClick={() => navigate("/admin/employees")}
+          className="bg-white p-6 rounded-xl shadow cursor-pointer hover:bg-blue-50"
+        >
+          <h2 className="text-lg font-semibold">👨‍💼 Employees</h2>
+          <p className="text-sm text-gray-600 mt-2">
+            Add, edit, delete employees
+          </p>
+        </div>
+
+        {/* 💰 SALARY (NEW - BASED ON ATTENDANCE) */}
+        <div
+          onClick={() => navigate("/admin/salary")}
+          className="bg-white p-6 rounded-xl shadow cursor-pointer hover:bg-yellow-50"
+        >
+          <h2 className="text-lg font-semibold">💰 Salary</h2>
+          <p className="text-sm text-gray-600 mt-2">
+            Auto calculate from attendance
+          </p>
+        </div>
+
+        {/* 📒 TALLY KHATA */}
         <div
           onClick={() => navigate("/admin/tally")}
           className="bg-white p-6 rounded-xl shadow cursor-pointer hover:bg-green-50"
@@ -76,14 +98,14 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        {/* OLD INVOICE / MEMO */}
+        {/* 🧾 OLD INVOICES */}
         <div
           onClick={() => navigate("/admin/invoices")}
           className="bg-white p-6 rounded-xl shadow cursor-pointer hover:bg-green-50"
         >
           <h2 className="text-lg font-semibold">🧾 Old Invoices</h2>
           <p className="text-sm text-gray-600 mt-2">
-            View all saved memos & invoices
+            View saved memos & invoices
           </p>
         </div>
 

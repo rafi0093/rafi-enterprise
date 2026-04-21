@@ -12,7 +12,9 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import Memo from "./pages/Memo";
 import AdminStock from "./pages/AdminStock";
-import Attendance from "./pages/Attendance"; // ✅ FIXED
+import Attendance from "./pages/Attendance";
+import Employees from "./pages/Employees";
+import Salary from "./pages/Salary";
 
 function App() {
   return (
@@ -24,6 +26,7 @@ function App() {
 
         {/* Main Content */}
         <main className="flex-grow">
+
           <Routes>
 
             {/* Public Routes */}
@@ -58,12 +61,29 @@ function App() {
               }
             />
 
-            {/* ✅ ATTENDANCE ROUTE ADDED */}
             <Route
-              path="/attendance"
+              path="/admin/attendance"
               element={
                 <ProtectedRoute>
                   <Attendance />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/employees"
+              element={
+                <ProtectedRoute>
+                  <Employees />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/salary"
+              element={
+                <ProtectedRoute>
+                  <Salary />
                 </ProtectedRoute>
               }
             />
@@ -79,10 +99,12 @@ function App() {
             />
 
           </Routes>
+
         </main>
 
         {/* Footer */}
         <Footer />
+
       </div>
     </BrowserRouter>
   );
