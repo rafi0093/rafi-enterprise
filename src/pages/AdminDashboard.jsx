@@ -29,7 +29,7 @@ const AdminDashboard = () => {
         </button>
       </div>
 
-      {/* CARDS */}
+      {/* CARDS GRID */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
 
         {/* 🧾 MEMO */}
@@ -65,7 +65,7 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        {/* 👨‍💼 EMPLOYEES (NEW) */}
+        {/* 👨‍💼 EMPLOYEES */}
         <div
           onClick={() => navigate("/admin/employees")}
           className="bg-white p-6 rounded-xl shadow cursor-pointer hover:bg-blue-50"
@@ -76,7 +76,7 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        {/* 💰 SALARY (NEW - BASED ON ATTENDANCE) */}
+        {/* 💰 SALARY */}
         <div
           onClick={() => navigate("/admin/salary")}
           className="bg-white p-6 rounded-xl shadow cursor-pointer hover:bg-yellow-50"
@@ -89,12 +89,12 @@ const AdminDashboard = () => {
 
         {/* 📒 TALLY KHATA */}
         <div
-          onClick={() => navigate("/admin/tally")}
+          onClick={() => navigate("/tallykhata")}
           className="bg-white p-6 rounded-xl shadow cursor-pointer hover:bg-green-50"
         >
           <h2 className="text-lg font-semibold">📒 Tally Khata</h2>
           <p className="text-sm text-gray-600 mt-2">
-            Manage daily accounts
+            Manage daily accounts & customers
           </p>
         </div>
 

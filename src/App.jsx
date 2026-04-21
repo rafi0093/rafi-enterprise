@@ -15,6 +15,7 @@ import AdminStock from "./pages/AdminStock";
 import Attendance from "./pages/Attendance";
 import Employees from "./pages/Employees";
 import Salary from "./pages/Salary";
+import TallyKhata from "./pages/TallyKhata";
 
 function App() {
   return (
@@ -88,13 +89,13 @@ function App() {
               }
             />
 
-            {/* 404 Page */}
+            {/* 📒 FIXED TALLY KHATA ROUTE */}
             <Route
-              path="*"
+              path="/tallykhata"
               element={
-                <h1 className="text-center py-20 text-xl">
-                  404 Page Not Found
-                </h1>
+                <ProtectedRoute>
+                  <TallyKhata />
+                </ProtectedRoute>
               }
             />
 
