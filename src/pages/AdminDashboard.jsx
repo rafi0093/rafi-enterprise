@@ -98,9 +98,9 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        {/* 🧾 OLD INVOICES */}
+        {/* 🧾 OLD INVOICES (FIXED ROUTE) */}
         <div
-          onClick={() => navigate("/admin/invoices")}
+          onClick={() => navigate("/admin/invoice")}
           className="bg-white p-6 rounded-xl shadow cursor-pointer hover:bg-green-50"
         >
           <h2 className="text-lg font-semibold">🧾 Old Invoices</h2>

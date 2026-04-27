@@ -16,6 +16,7 @@ import Attendance from "./pages/Attendance";
 import Employees from "./pages/Employees";
 import Salary from "./pages/Salary";
 import TallyKhata from "./pages/TallyKhata";
+import OldInvoice from "./pages/OldInvoice";
 
 function App() {
   return (
@@ -95,6 +96,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <TallyKhata />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* old invoice route */}
+            <Route
+              path="/admin/invoice"
+              element={
+                <ProtectedRoute>
+                  <OldInvoice />
                 </ProtectedRoute>
               }
             />

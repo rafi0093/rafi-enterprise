@@ -8,24 +8,9 @@ import {
   query,
   where,
   serverTimestamp,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/config";
-
-// PRODUCT LIST
-const PRODUCT_LIST = [
-  "ULL - 1",
-  "ULL - 2",
-  "MISHALI ( KALO )",
-  "BLAZER",
-  "COLOUR",
-  "COLOR WHITE",
-  "D - COMBER",
-  "D - SUPER",
-  "FOOM LOW",
-  "FOOM S",
-  "FIBER WHITE",
-  "FIBER GREEN",
-];
 
 const AdminStock = () => {
   const [productName, setProductName] = useState("");
@@ -34,15 +19,20 @@ const AdminStock = () => {
   const [shift, setShift] = useState("Morning");
   const [stocks, setStocks] = useState([]);
 
-  // 🔥 HISTORY STATES
   const [history, setHistory] = useState([]);
-  const [view, setView] = useState("stock"); // stock | history
+  const [view, setView] = useState("stock");
 
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
+  // 🔥 PRODUCT STATES
+  const [products, setProducts] = useState([]);
+  const [newProduct, setNewProduct] = useState("");
+  const [showProductPanel, setShowProductPanel] = useState(false);
+
   const stockRef = collection(db, "stocks");
   const historyRef = collection(db, "stockHistory");
+  const productRef = collection(db, "products");
 
   // LOAD STOCK
   const loadStocks = async () => {
@@ -56,12 +46,19 @@ const AdminStock = () => {
     setHistory(data.docs.map((doc) => doc.data()));
   };
 
+  // LOAD PRODUCTS
+  const loadProducts = async () => {
+    const data = await getDocs(productRef);
+    setProducts(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
+  };
+
   useEffect(() => {
     loadStocks();
     loadHistory();
+    loadProducts();
   }, []);
 
-  // ADD STOCK + HISTORY
+  // ADD STOCK
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -91,7 +88,7 @@ const AdminStock = () => {
       productName,
       quantity: Number(quantity),
       shift,
-      date: new Date().toLocaleDateString("en-CA"), // YYYY-MM-DD format
+      date: new Date().toLocaleDateString("en-CA"),
       createdAt: serverTimestamp(),
     });
 
@@ -103,19 +100,32 @@ const AdminStock = () => {
     loadHistory();
   };
 
-  // 🔥 FILTER LOGIC
+  // ADD PRODUCT
+  const handleAddProduct = async () => {
+    if (!newProduct) return;
+
+    await addDoc(productRef, {
+      name: newProduct,
+    });
+
+    setNewProduct("");
+    loadProducts();
+  };
+
+  // DELETE PRODUCT
+  const handleDeleteProduct = async (id) => {
+    await deleteDoc(doc(db, "products", id));
+    loadProducts();
+  };
+
+  // FILTER HISTORY
   const filteredHistory = history.filter((item) => {
     if (!fromDate && !toDate) return true;
 
     const itemDate = item.date;
 
-    if (fromDate && !toDate) {
-      return itemDate >= fromDate;
-    }
-
-    if (!fromDate && toDate) {
-      return itemDate <= toDate;
-    }
+    if (fromDate && !toDate) return itemDate >= fromDate;
+    if (!fromDate && toDate) return itemDate <= toDate;
 
     return itemDate >= fromDate && itemDate <= toDate;
   });
@@ -125,7 +135,7 @@ const AdminStock = () => {
 
       <h1 className="text-2xl font-bold mb-4">📦 Stock Management</h1>
 
-      {/* BUTTONS */}
+      {/* VIEW BUTTONS */}
       <div className="flex gap-3 mb-5">
         <button
           onClick={() => setView("stock")}
@@ -146,19 +156,22 @@ const AdminStock = () => {
         </button>
       </div>
 
-      {/* ================= STOCK VIEW ================= */}
+      {/* ================= STOCK ================= */}
       {view === "stock" && (
         <>
           <form onSubmit={handleSubmit} className="grid md:grid-cols-5 gap-4 mb-6">
 
+            {/* PRODUCT DROPDOWN */}
             <select
               className="border p-2"
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
             >
               <option value="">Select Product</option>
-              {PRODUCT_LIST.map((item, index) => (
-                <option key={index}>{item}</option>
+              {products.map((p) => (
+                <option key={p.id} value={p.name}>
+                  {p.name}
+                </option>
               ))}
             </select>
 
@@ -193,6 +206,58 @@ const AdminStock = () => {
             </button>
           </form>
 
+          {/* 🔥 TOGGLE BUTTON */}
+          <button
+            type="button"
+            onClick={() => setShowProductPanel(!showProductPanel)}
+            className="bg-purple-600 text-white px-4 py-2 mb-4 rounded"
+          >
+            {showProductPanel
+              ? "❌ Close Product Panel"
+              : "➕ Add Product Name"}
+          </button>
+
+          {/* 🔥 PRODUCT PANEL (TOGGLE) */}
+          {showProductPanel && (
+            <div className="mb-6 border p-4 rounded bg-gray-50">
+
+              <div className="flex gap-2 mb-3">
+                <input
+                  className="border p-2 flex-1"
+                  placeholder="New Product Name"
+                  value={newProduct}
+                  onChange={(e) => setNewProduct(e.target.value)}
+                />
+
+                <button
+                  type="button"
+                  onClick={handleAddProduct}
+                  className="bg-green-600 text-white px-4"
+                >
+                  Add
+                </button>
+              </div>
+
+              {products.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex justify-between border p-2 mb-2 bg-white"
+                >
+                  <span>{p.name}</span>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteProduct(p.id)}
+                    className="text-red-500"
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
+
+            </div>
+          )}
+
           {/* STOCK TABLE */}
           <table className="w-full border">
             <thead className="bg-gray-200">
@@ -202,6 +267,7 @@ const AdminStock = () => {
                 <th>Quantity</th>
               </tr>
             </thead>
+
             <tbody>
               {stocks.map((s, i) => (
                 <tr key={i} className="text-center border-t">
@@ -215,12 +281,11 @@ const AdminStock = () => {
         </>
       )}
 
-      {/* ================= HISTORY VIEW ================= */}
+      {/* ================= HISTORY ================= */}
       {view === "history" && (
         <>
           <h2 className="text-xl font-bold mb-3">📊 Stock History</h2>
 
-          {/* FILTER */}
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             <input
               type="date"

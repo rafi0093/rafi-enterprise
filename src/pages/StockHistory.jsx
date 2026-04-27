@@ -1,28 +1,40 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  orderBy,
+} from "firebase/firestore";
 import { db } from "../firebase/config";
 
 const StockHistory = () => {
   const [history, setHistory] = useState([]);
 
-  // FILTER STATES
   const [date, setDate] = useState("");
   const [product, setProduct] = useState("");
   const [shift, setShift] = useState("");
 
   const historyRef = collection(db, "stockHistory");
 
-  // LOAD ALL HISTORY
+  // 🔥 LOAD DATA (FIXED: createdAt sorting)
   const loadHistory = async () => {
-    const data = await getDocs(historyRef);
-    setHistory(data.docs.map((doc) => doc.data()));
+    try {
+      const q = query(historyRef, orderBy("createdAt", "desc"));
+      const data = await getDocs(q);
+
+      const list = data.docs.map((doc) => doc.data());
+      setHistory(list);
+    } catch (error) {
+      console.error("Error loading history:", error);
+      alert("Firebase index needed for createdAt");
+    }
   };
 
   useEffect(() => {
     loadHistory();
   }, []);
 
-  // FILTER LOGIC
+  // 🔍 FILTER
   const filteredData = history.filter((item) => {
     return (
       (date === "" || item.date === date) &&
@@ -34,9 +46,11 @@ const StockHistory = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
 
-      <h1 className="text-2xl font-bold mb-4">📊 Stock History Report</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        📊 Stock History Report
+      </h1>
 
-      {/* FILTER SECTION */}
+      {/* FILTER */}
       <div className="grid md:grid-cols-3 gap-4 mb-6">
 
         <input

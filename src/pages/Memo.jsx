@@ -1,21 +1,47 @@
 import React, { useState, useEffect } from "react";
 
+import {
+  collection,
+  getDocs,
+  updateDoc,
+  doc,
+  query,
+  where,
+  addDoc, // ✅ ADD করা হয়েছে
+} from "firebase/firestore";
+import { db } from "../firebase/config";
+
 const Memo = () => {
-  // ===== SERIAL NUMBER =====
+
   const getInitialSerial = () => {
     const last = localStorage.getItem("memoSerial");
     return last ? Number(last) + 1 : 1;
   };
+
   const [serial, setSerial] = useState(getInitialSerial());
   const displaySerial = `MEMO-${new Date().getFullYear()}-${String(serial).padStart(5, "0")}`;
 
-  // ===== STATE =====
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      const snap = await getDocs(collection(db, "stocks"));
+
+      const list = snap.docs
+        .map((d) => d.data()?.productName?.trim())
+        .filter(Boolean);
+
+      setProducts(list);
+    };
+
+    loadProducts();
+  }, []);
+
   const [customer, setCustomer] = useState({ name: "", phone: "", address: "" });
   const [items, setItems] = useState([{ product: "", qty: "", price: "" }]);
   const [previous, setPrevious] = useState(0);
   const [deposit, setDeposit] = useState(0);
 
-  // ===== HANDLERS =====
   const handleCustomer = (e) =>
     setCustomer({ ...customer, [e.target.name]: e.target.value });
 
@@ -31,30 +57,99 @@ const Memo = () => {
   const removeItem = (index) =>
     items.length > 1 && setItems(items.filter((_, i) => i !== index));
 
-  // ===== CALCULATIONS =====
   const totalPrice = items.reduce(
     (sum, i) => sum + Number(i.qty || 0) * Number(i.price || 0),
     0
   );
+
   const subTotal = totalPrice + Number(previous || 0);
   const due = subTotal - Number(deposit || 0);
 
-  // ===== AFTER PRINT =====
+  // 🔥 MAIN FIX HERE
+  const handlePrint = async () => {
+    try {
+
+      // ✅ STOCK UPDATE (unchanged)
+      for (const item of items) {
+
+        if (!item.product || !item.qty) continue;
+
+        const q = query(
+          collection(db, "stocks"),
+          where("productName", "==", item.product)
+        );
+
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          alert(`${item.product} stock a nai`);
+          return;
+        }
+
+        const stockDoc = snap.docs[0];
+        const oldQty = Number(stockDoc.data().quantity || 0);
+
+        const sellQty = Number(item.qty);
+
+        if (oldQty < sellQty) {
+          alert(`${item.product} stock kom ase`);
+          return;
+        }
+
+        await updateDoc(doc(db, "stocks", stockDoc.id), {
+          quantity: oldQty - sellQty,
+        });
+      }
+
+      // ✅ DATE FORMAT
+      const now = new Date();
+      const date = now.toISOString().split("T")[0];
+
+      // ✅ FIRESTORE SAVE (NEW ADD)
+      await addDoc(collection(db, "invoices"), {
+        serial: displaySerial,
+        date: date,
+        createdAt: now,
+
+        customerName: customer.name,
+        phone: customer.phone,
+        address: customer.address,
+
+        items: items.map(i => ({
+          productName: i.product,
+          quantity: Number(i.qty),
+          price: Number(i.price),
+        })),
+
+        totalAmount: totalPrice,
+        previousAmount: previous,
+        deposit: deposit,
+        due: due,
+      });
+
+      // 🖨️ PRINT
+      window.print();
+
+    } catch (error) {
+      console.error(error);
+      alert("Error saving invoice");
+    }
+  };
+
   useEffect(() => {
     const afterPrint = () => {
       const nextSerial = serial + 1;
       setSerial(nextSerial);
       localStorage.setItem("memoSerial", nextSerial);
     };
+
     window.addEventListener("afterprint", afterPrint);
     return () => window.removeEventListener("afterprint", afterPrint);
   }, [serial]);
 
-  // ===== MEMO BOX =====
   const MemoBox = ({ copy }) => (
     <div className="memo-box">
 
-      {/* ===== SHOP HEADER ===== */}
       <div className="shop-header">
         <h1>M/S RAFI ENTERPRISE</h1>
         <h2>RAFI WASTE COTTON REFINERY MILLS</h2>
@@ -62,13 +157,13 @@ const Memo = () => {
         <p>📞 01718-566556, 01716-423214</p>
       </div>
 
-      {/* ===== CUSTOMER + SERIAL (close gap) ===== */}
       <div className="customer-serial-section">
         <div className="customer-info">
           <p><b>Name:</b> {customer.name}</p>
           <p><b>Phone:</b> {customer.phone}</p>
           <p><b>Address:</b> {customer.address}</p>
         </div>
+
         <div className="serial-info">
           <p><b>MEMO No:</b> {displaySerial}</p>
           <p><b>Date:</b> {new Date().toLocaleDateString()}</p>
@@ -84,6 +179,7 @@ const Memo = () => {
             <th>Total</th>
           </tr>
         </thead>
+
         <tbody>
           {items.map((i, idx) => (
             <tr key={idx}>
@@ -104,9 +200,7 @@ const Memo = () => {
         <div className="grand-due"><b>Due:</b> ৳ {due}</div>
       </div>
 
-      <div className="extra">
-        <p>Carrier: </p>
-      </div>
+      <div className="extra"><p>Carrier: </p></div>
 
       <div className="sign">
         <span>Customer Sign</span>
@@ -119,7 +213,6 @@ const Memo = () => {
 
   return (
     <>
-      {/* ===== FORM ===== */}
       <div className="no-print form">
         <h1>Create Memo</h1>
 
@@ -129,7 +222,22 @@ const Memo = () => {
 
         {items.map((i, idx) => (
           <div key={idx} className="row">
-            <input placeholder="Product" value={i.product} onChange={(e) => handleItem(idx, "product", e.target.value)} />
+
+            <select
+              value={i.product}
+              onChange={(e) => handleItem(idx, "product", e.target.value)}
+              style={{
+                border: "1.5px solid #000",
+                borderRadius: "5px",
+                padding: "6px"
+              }}
+            >
+              <option value="">Product</option>
+              {products.map((p, index) => (
+                <option key={index} value={p}>{p}</option>
+              ))}
+            </select>
+
             <input type="number" placeholder="Qty" value={i.qty} onChange={(e) => handleItem(idx, "qty", e.target.value)} />
             <input type="number" placeholder="Rate" value={i.price} onChange={(e) => handleItem(idx, "price", e.target.value)} />
             <button className="btn-red" onClick={() => removeItem(idx)}>Remove</button>
@@ -143,23 +251,22 @@ const Memo = () => {
             Previous Amount:
             <input type="number" value={previous} onChange={(e) => setPrevious(e.target.value)} />
           </label>
+
           <label>
             Deposit:
             <input type="number" value={deposit} onChange={(e) => setDeposit(e.target.value)} />
           </label>
         </div>
 
-        <button className="btn-green" onClick={() => window.print()}>Print Memo</button>
+        <button className="btn-green" onClick={handlePrint}>Print Memo</button>
       </div>
 
-      {/* ===== PRINT PAGE ===== */}
       <div className="print-page">
         <MemoBox copy="Customer Copy" />
         <div className="cut-line">✂ ------------------------------------------</div>
         <MemoBox copy="Office Copy" />
       </div>
 
-      {/* ===== CSS ===== */}
       <style>{`
         * { box-sizing: border-box; font-family: Arial; }
 
@@ -220,7 +327,6 @@ const Memo = () => {
         .shop-header h2 { margin: 2px 0; font-size: 14px; font-weight: 700; }
         .shop-header p { margin: 2px 0; font-size: 11px; }
 
-        /* ===== CUSTOMER + SERIAL GAP FIX ===== */
         .customer-serial-section {
           display: flex;
           justify-content: space-between;
@@ -230,8 +336,6 @@ const Memo = () => {
           font-size: 12px;
         }
         .customer-info p, .serial-info p { margin: 0; padding: 1px 0; }
-
-        .header { display: none; } /* old serial hidden */
 
         table {
           width: 100%;

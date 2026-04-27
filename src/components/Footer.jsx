@@ -8,7 +8,7 @@ const Footer = () => {
         <p className="text-sm">📍 Hazi Mor, Kaligonj, Satkhira, Khulna, Bangladesh</p>
         <p className="text-sm">📞 +88 01718 56 65 56, +88 01716 42 32 14</p>
       </div>
-      <p className="text-xs mt-2">✨© 2025 M/S RAFI ENTERPRISE. All Rights Reserved. Developed by Tasnimul Hasan Rafi</p>
+      <p className="text-xs mt-2">✨© 2026 M/S RAFI ENTERPRISE. All Rights Reserved. Developed by Tasnimul Hasan Rafi</p>
     </footer>
   );
 };

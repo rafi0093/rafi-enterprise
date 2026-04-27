@@ -9,10 +9,13 @@ import {
 } from "firebase/firestore";
 
 const TallyKhata = () => {
-  // 🟢 Customer form
+  // 🟢 Customer Form
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+
+  // 🔍 Search
+  const [search, setSearch] = useState("");
 
   // 📋 Data
   const [customers, setCustomers] = useState([]);
@@ -21,8 +24,9 @@ const TallyKhata = () => {
   // 💰 Transaction
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("credit");
+  const [note, setNote] = useState("");
 
-  // 🔄 Fetch customers
+  // 🔄 Fetch Customers
   const fetchCustomers = async () => {
     const snap = await getDocs(collection(db, "customers"));
     const data = snap.docs.map((d) => ({
@@ -56,7 +60,12 @@ const TallyKhata = () => {
     fetchCustomers();
   };
 
-  // 💰 Add Transaction (IMPORTANT FIXED)
+  // 🔍 Filter
+  const filteredCustomers = customers.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // 💰 Add Transaction
   const handleTransaction = async () => {
     if (!amount || !selectedCustomer) return;
 
@@ -67,10 +76,10 @@ const TallyKhata = () => {
         ? selectedCustomer.totalDue + value
         : selectedCustomer.totalDue - value;
 
-    // ✅ SAFE TIMESTAMP (NO ERROR)
     const newTransaction = {
       type,
       amount: value,
+      note: note || "",
       timestamp: new Date(),
     };
 
@@ -85,6 +94,7 @@ const TallyKhata = () => {
     });
 
     setAmount("");
+    setNote("");
     fetchCustomers();
 
     setSelectedCustomer({
@@ -94,16 +104,12 @@ const TallyKhata = () => {
     });
   };
 
-  // 🕒 Safe date formatter
+  // 🕒 Format Date
   const formatDateTime = (timestamp) => {
     if (!timestamp) return "";
-
-    // Firestore Timestamp case
     if (timestamp.seconds) {
       return new Date(timestamp.seconds * 1000).toLocaleString();
     }
-
-    // Normal JS Date case
     return new Date(timestamp).toLocaleString();
   };
 
@@ -112,12 +118,9 @@ const TallyKhata = () => {
 
       {/* 🟢 ADD CUSTOMER */}
       <div className="bg-white shadow rounded-xl p-5 mb-6">
-        <h2 className="text-2xl font-bold mb-4">
-          🧾 Add Customer
-        </h2>
+        <h2 className="text-2xl font-bold mb-4">🧾 Add Customer</h2>
 
         <div className="grid gap-3">
-
           <input
             className="border p-2 rounded"
             placeholder="Customer Name"
@@ -145,32 +148,42 @@ const TallyKhata = () => {
           >
             ➕ Add Customer
           </button>
-
         </div>
       </div>
 
       {/* 📋 CUSTOMER LIST */}
       <div className="bg-white shadow rounded-xl p-5">
-        <h2 className="text-xl font-bold mb-4">
-          📋 Customers
-        </h2>
+        <h2 className="text-xl font-bold mb-4">📋 Customers</h2>
 
-        {customers.map((c) => (
-          <div
-            key={c.id}
-            onClick={() => setSelectedCustomer(c)}
-            className="border p-3 rounded mb-2 flex justify-between cursor-pointer hover:bg-gray-100"
-          >
-            <div>
-              <h3 className="font-semibold">{c.name}</h3>
-              <p className="text-sm text-gray-600">{c.phone}</p>
-            </div>
+        {/* 🔍 SEARCH */}
+        <input
+          type="text"
+          placeholder="🔍 Search customer by name..."
+          className="border p-2 rounded w-full mb-4"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
 
-            <div className="font-bold">
-              ৳ {c.totalDue}
+        {filteredCustomers.length === 0 ? (
+          <p className="text-gray-500">No customer found</p>
+        ) : (
+          filteredCustomers.map((c) => (
+            <div
+              key={c.id}
+              onClick={() => setSelectedCustomer(c)}
+              className="border p-3 rounded mb-2 flex justify-between cursor-pointer hover:bg-gray-100"
+            >
+              <div>
+                <h3 className="font-semibold">{c.name}</h3>
+                <p className="text-sm text-gray-600">{c.phone}</p>
+              </div>
+
+              <div className="font-bold">
+                ৳ {c.totalDue}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* 📒 LEDGER */}
@@ -190,7 +203,7 @@ const TallyKhata = () => {
           </p>
 
           {/* ➕ TRANSACTION */}
-          <div className="flex gap-2 mb-4">
+          <div className="grid gap-2 mb-4">
 
             <select
               className="border p-2 rounded"
@@ -202,33 +215,36 @@ const TallyKhata = () => {
             </select>
 
             <input
-              className="border p-2 rounded flex-1"
+              className="border p-2 rounded"
               placeholder="Amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
 
+            <input
+              className="border p-2 rounded"
+              placeholder="Description (e.g. product, reason...)"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+
             <button
               onClick={handleTransaction}
-              className="bg-blue-600 text-white px-4 rounded"
+              className="bg-blue-600 text-white py-2 rounded"
             >
-              Add
+              Add Transaction
             </button>
 
           </div>
 
           {/* 📜 HISTORY */}
           <div>
-            <h3 className="font-semibold mb-2">
-              Transaction History
-            </h3>
+            <h3 className="font-semibold mb-2">Transaction History</h3>
 
             {(selectedCustomer.transactions || []).map((t, i) => (
-              <div
-                key={i}
-                className="flex justify-between border-b py-2 text-sm"
-              >
-                <div>
+              <div key={i} className="border-b py-2 text-sm">
+
+                <div className="flex justify-between">
                   <p className={
                     t.type === "credit"
                       ? "text-green-600 font-semibold"
@@ -237,14 +253,21 @@ const TallyKhata = () => {
                     {t.type.toUpperCase()}
                   </p>
 
-                  <p className="text-gray-500">
-                    {formatDateTime(t.timestamp)}
+                  <p className="font-semibold">
+                    ৳ {t.amount}
                   </p>
                 </div>
 
-                <p className="font-semibold">
-                  ৳ {t.amount}
+                {t.note && (
+                  <p className="text-gray-700">
+                    📝 {t.note}
+                  </p>
+                )}
+
+                <p className="text-gray-500 text-xs">
+                  {formatDateTime(t.timestamp)}
                 </p>
+
               </div>
             ))}
 
